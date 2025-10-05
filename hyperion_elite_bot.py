@@ -38,6 +38,12 @@ import random
 from urllib.parse import urlparse
 from collections import Counter
 import math
+# System monitoring (with fallback for environments without psutil)
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 # Telegram Bot imports
 try:
@@ -348,6 +354,78 @@ class HyperionEliteBot:
         logger.info(f"   ⚡ Max Threads: {self.optimal_threads}")
         logger.info(f"   🤖 AI Core: Enabled")
     
+    def get_system_stats(self) -> Dict:
+        """Get real-time system performance statistics with fallback"""
+        try:
+            if PSUTIL_AVAILABLE:
+                cpu_percent = psutil.cpu_percent(interval=0.1)
+                memory = psutil.virtual_memory()
+                disk = psutil.disk_usage('/')
+                process = psutil.Process()
+                process_memory = process.memory_info()
+                
+                return {
+                    'cpu_percent': cpu_percent,
+                    'memory_used_gb': memory.used / (1024**3),
+                    'memory_total_gb': memory.total / (1024**3),
+                    'memory_percent': memory.percent,
+                    'disk_used_gb': disk.used / (1024**3),
+                    'disk_total_gb': disk.total / (1024**3),
+                    'disk_percent': (disk.used / disk.total) * 100,
+                    'process_memory_mb': process_memory.rss / (1024**2),
+                    'cpu_cores': psutil.cpu_count(),
+                    'load_avg': psutil.getloadavg()[0] if hasattr(psutil, 'getloadavg') else 0
+                }
+            else:
+                # Fallback: use /proc filesystem for basic stats (Linux)
+                try:
+                    # CPU usage from /proc/stat
+                    with open('/proc/stat', 'r') as f:
+                        cpu_line = f.readline()
+                        cpu_times = [float(x) for x in cpu_line.split()[1:]]
+                        total = sum(cpu_times)
+                        idle = cpu_times[3]
+                        cpu_percent = 100.0 * (1.0 - idle / total) if total > 0 else 0
+                    
+                    # Memory from /proc/meminfo
+                    mem_total = mem_available = 0
+                    with open('/proc/meminfo', 'r') as f:
+                        for line in f:
+                            if 'MemTotal' in line:
+                                mem_total = int(line.split()[1]) / 1024  # KB to MB
+                            elif 'MemAvailable' in line:
+                                mem_available = int(line.split()[1]) / 1024
+                    
+                    mem_used = mem_total - mem_available if mem_total > 0 else 0
+                    mem_percent = (mem_used / mem_total * 100) if mem_total > 0 else 0
+                    
+                    return {
+                        'cpu_percent': min(cpu_percent, 100.0),
+                        'memory_used_gb': mem_used / 1024,
+                        'memory_total_gb': mem_total / 1024,
+                        'memory_percent': mem_percent,
+                        'disk_used_gb': 0,
+                        'disk_total_gb': 0,
+                        'disk_percent': 0,
+                        'process_memory_mb': mem_used * 0.1,  # Estimate
+                        'cpu_cores': self.cpu_cores,
+                        'load_avg': 0
+                    }
+                except:
+                    # Ultimate fallback
+                    return {
+                        'cpu_percent': 0, 'memory_percent': 0, 'disk_percent': 0,
+                        'memory_used_gb': 0, 'memory_total_gb': 8, 'process_memory_mb': 0,
+                        'cpu_cores': self.cpu_cores, 'load_avg': 0
+                    }
+        except Exception as e:
+            logger.error(f"Failed to get system stats: {e}")
+            return {
+                'cpu_percent': 0, 'memory_percent': 0, 'disk_percent': 0,
+                'memory_used_gb': 0, 'memory_total_gb': 8, 'process_memory_mb': 0,
+                'cpu_cores': self.cpu_cores, 'load_avg': 0
+            }
+    
     async def setup_telegram_bot(self):
         """Setup elite Telegram bot with all handlers"""
         if not TELEGRAM_AVAILABLE:
@@ -367,6 +445,7 @@ class HyperionEliteBot:
             self.telegram_app.add_handler(CommandHandler("results", self.cmd_results))
             self.telegram_app.add_handler(CommandHandler("proxies", self.cmd_proxies))
             self.telegram_app.add_handler(CommandHandler("auth", self.cmd_auth))
+            self.telegram_app.add_handler(CommandHandler("addcombos", self.cmd_add_combos))
             
             # File handler for combo uploads
             self.telegram_app.add_handler(MessageHandler(filters.Document.ALL, self.handle_combo_file))
@@ -409,6 +488,7 @@ class HyperionEliteBot:
 /status - Real-time progress
 /stop - Emergency stop
 /results - Download hits
+/addcombos - Add combos during checking
 
 **🤖 AI Features:**
 • Intelligent combo quality analysis
@@ -779,6 +859,9 @@ Upload a combo file and run /scan first, then use:
     
     async def cmd_status_callback(self, query):
         """Handle /status command via callback"""
+        # Get real-time system stats
+        sys_stats = self.get_system_stats()
+        
         if self.is_running and self.current_job:
             elapsed = time.time() - self.stats['start_time']
             progress_pct = (self.stats['checked'] / self.stats['total'] * 100) if self.stats['total'] > 0 else 0
@@ -797,16 +880,30 @@ Upload a combo file and run /scan first, then use:
 • Proxy Mode: {self.current_job.get('proxy_mode', 'Direct')}
 • Active Proxies: {len(self.current_proxies)}
 
+**System Performance:**
+🖥️ CPU Usage: {sys_stats['cpu_percent']:.1f}%
+🧠 RAM: {sys_stats['memory_used_gb']:.1f}/{sys_stats['memory_total_gb']:.1f}GB ({sys_stats['memory_percent']:.1f}%)
+💾 Disk: {sys_stats['disk_used_gb']:.1f}/{sys_stats['disk_total_gb']:.1f}GB ({sys_stats['disk_percent']:.1f}%)
+⚡ Bot Memory: {sys_stats['process_memory_mb']:.1f}MB
+
 **System Status:** Elite Mode Active 🎖️
             """
         else:
-            status_msg = """
+            status_msg = f"""
 📊 **HYPERION ELITE STATUS**
 
 **Operation:** Idle 🟡
 **Status:** Ready for elite operations
 **Last Results:** Available via /results
-**System:** Fully operational
+
+**System Performance:**
+🖥️ CPU Usage: {sys_stats['cpu_percent']:.1f}%
+🧠 RAM: {sys_stats['memory_used_gb']:.1f}/{sys_stats['memory_total_gb']:.1f}GB ({sys_stats['memory_percent']:.1f}%)
+💾 Disk: {sys_stats['disk_used_gb']:.1f}/{sys_stats['disk_total_gb']:.1f}GB ({sys_stats['disk_percent']:.1f}%)
+⚡ Bot Memory: {sys_stats['process_memory_mb']:.1f}MB
+💻 Cores: {sys_stats['cpu_cores']}
+
+**System:** Fully operational ✅
 
 Upload combo file and use /scan to begin!
             """
@@ -922,28 +1019,51 @@ These proxies are optimized for maximum success rates!
                 await update.message.reply_text("❌ Please send a .txt combo file")
                 return
             
-            # Elite file processing message
-            process_msg = await update.message.reply_text("""
+            # Check if we're waiting for combo addition during active checking
+            chat_id = update.effective_chat.id
+            is_adding_combos = (hasattr(self, 'waiting_for_combos') and 
+                              chat_id in self.waiting_for_combos and 
+                              self.waiting_for_combos[chat_id] and
+                              self.is_running)
+            
+            if is_adding_combos:
+                process_msg = await update.message.reply_text("""
+📁 **Adding Combos to Active Session**
+
+⚡ Downloading new combo file...
+🔍 Processing and validating...
+🔄 Adding to unchecked queue...
+                """, parse_mode=ParseMode.MARKDOWN)
+            else:
+                process_msg = await update.message.reply_text("""
 📁 **Elite File Processing**
 
 ⚡ Downloading combo file...
 🔍 Parsing and validating...
 🤖 Preparing for AI analysis...
-            """, parse_mode=ParseMode.MARKDOWN)
+                """, parse_mode=ParseMode.MARKDOWN)
             
             # Download and process file
             file = await context.bot.get_file(document.file_id)
             file_path = f"elite_combo_{update.effective_user.id}_{int(time.time())}.txt"
             await file.download_to_drive(file_path)
             
-            # Read and store combo list
+            # Read and validate combo list
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                combo_lines = [line.strip() for line in f if line.strip()]
+                new_combo_lines = [line.strip() for line in f if line.strip() and ':' in line]
             
             os.remove(file_path)  # Clean up
             
-            self.last_combo_list = combo_lines
-            self.last_upload_time = time.time()
+            if is_adding_combos:
+                # Add combos to existing checking session
+                await self.add_combos_to_session(new_combo_lines, process_msg)
+                # Clear the waiting flag
+                self.waiting_for_combos[chat_id] = False
+                return
+            else:
+                # Normal file upload for new session
+                self.last_combo_list = new_combo_lines
+                self.last_upload_time = time.time()
             
             # Success message with next steps
             success_msg = f"""
@@ -951,7 +1071,7 @@ These proxies are optimized for maximum success rates!
 
 📊 **File Details:**
 • **Filename:** {document.file_name}
-• **Total Lines:** {len(combo_lines):,}
+• **Total Lines:** {len(new_combo_lines):,}
 • **Size:** {document.file_size:,} bytes
 • **Uploaded:** {datetime.now().strftime('%H:%M:%S')}
 
@@ -1121,11 +1241,12 @@ File is securely stored and ready for processing! 🎖️
                     if self.stats['rate'] > 0:
                         self.stats['eta'] = (remaining / self.stats['rate']) * 60  # seconds
                 
-                # Enhanced progress logging every 10 checks
-                if checked % 10 == 0:
+                # Enhanced progress logging every 20 checks with CPU monitoring
+                if checked % 20 == 0:
+                    sys_stats = self.get_system_stats()
                     logger.info(f"🚀 HYPERION Progress: {checked}/{total} ({checked/total*100:.1f}%) | "
                                f"✅ Hits: {hits} (Pro: {pro_hits}, Free: {free_hits}, Empty: {empty_hits}) | "
-                               f"❌ Fails: {fails} | ⚠️ Errors: {errors}")
+                               f"❌ Fails: {fails} | ⚠️ Errors: {errors} | 🖥️ CPU: {sys_stats['cpu_percent']:.1f}%")
             
             def status_callback(message, level):
                 if level == "hit":
@@ -1250,6 +1371,9 @@ File is securely stored and ready for processing! 🎖️
                 else:
                     proxy_status = f"Fast ({len(self.current_proxies)})"
             
+            # Get real-time system stats
+            sys_stats = self.get_system_stats()
+            
             updated_msg = f"""
 🚀 **HYPERION ELITE CHECKING**
 
@@ -1274,12 +1398,15 @@ File is securely stored and ready for processing! 🎖️
   └─ ≥ 5 files: {self.stats.get('free_high_files', 0):,}
 📭 **Empty:** {self.stats.get('empty_hits', 0):,}
 
-**System:**
+**System Performance:**
+🖥️ CPU: {sys_stats['cpu_percent']:.1f}%
+🧠 RAM: {sys_stats['memory_percent']:.1f}%
+⚡ Bot: {sys_stats['process_memory_mb']:.1f}MB
 • Proxies: {proxy_status}
 • Mode: Elite
 • Status: Running 🟢
 
-*Live updates every 10 checks*
+*Live updates every 20 checks*
             """
             
             # Update the progress message
@@ -1318,11 +1445,17 @@ File is securely stored and ready for processing! 🎖️
         logger.info("Progress update loop ended")
     
     async def stop_checking(self):
-        """Stop current checking job"""
+        """Stop current checking job and send partial results"""
         if self.is_running and self.checker_engine:
             self.is_running = False
             self.checker_engine.stop_requested = True
             logger.info("🛑 Elite checking stop requested")
+            
+            # Send partial results if we have hits
+            if self.stats['hits'] > 0 and self.current_job:
+                chat_id = self.current_job.get('chat_id')
+                if chat_id:
+                    await self.send_partial_results(chat_id)
         else:
             logger.info("ℹ️ No checking job is currently running")
     
@@ -1437,6 +1570,64 @@ Elite operation complete! 🎖️
         except Exception as e:
             logger.error(f"Error sending elite results: {e}")
             await self.send_message(chat_id, f"❌ Error delivering results: {str(e)}")
+    
+    async def send_partial_results(self, chat_id: int):
+        """Send partial results when checking is stopped mid-process"""
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            results_file = self.results_dir / f"hyperion_elite_partial_{timestamp}.txt"
+            
+            elapsed = time.time() - self.stats['start_time']
+            
+            # Create partial results file
+            with open(results_file, 'w', encoding='utf-8') as f:
+                f.write("=" * 60 + "\n")
+                f.write("HYPERION ELITE PARTIAL RESULTS\n")
+                f.write("=" * 60 + "\n")
+                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
+                f.write(f"Status: STOPPED BY USER\n")
+                f.write(f"Progress: {self.stats['checked']}/{self.stats['total']} ({self.stats['checked']/self.stats['total']*100:.1f}%)\n")
+                f.write(f"Partial Hits: {self.stats['hits']}\n")
+                f.write(f"Runtime: {int(elapsed)}s ({elapsed/60:.1f}m)\n")
+                
+                if self.current_job:
+                    f.write(f"Threads Used: {self.current_job.get('threads', 'N/A')}\n")
+                    f.write(f"Proxy Mode: {self.current_job.get('proxy_mode', 'Direct')}\n")
+                
+                f.write("=" * 60 + "\n\n")
+                
+                for i, hit in enumerate(self.hits, 1):
+                    f.write(f"[{i:04d}] {hit}\n")
+                
+                f.write("\n" + "=" * 60 + "\n")
+                f.write("End of HYPERION Elite Partial Results\n")
+                f.write("=" * 60 + "\n")
+            
+            # Send file
+            with open(results_file, 'rb') as f:
+                await self.telegram_app.bot.send_document(
+                    chat_id=chat_id,
+                    document=f,
+                    filename=results_file.name,
+                    caption=f"""
+⏹️ **HYPERION ELITE PARTIAL RESULTS**
+
+• **Status:** Stopped by user
+• **Hits Found:** {self.stats['hits']:,}
+• **Progress:** {self.stats['checked']:,}/{self.stats['total']:,} ({self.stats['checked']/self.stats['total']*100:.1f}%)
+• **Runtime:** {int(elapsed)}s ({elapsed/60:.1f}m)
+• **File:** {results_file.name}
+
+Elite operation interrupted! 🛑
+                    """,
+                    parse_mode=ParseMode.MARKDOWN
+                )
+            
+            logger.info(f"Partial results sent: {results_file}")
+            
+        except Exception as e:
+            logger.error(f"Error sending partial results: {e}")
+            await self.send_message(chat_id, f"❌ Error delivering partial results: {str(e)}")
     
     async def cmd_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Elite status command"""
@@ -1596,6 +1787,134 @@ Elite operations at your command! 🎖️
         """
         
         await update.message.reply_text(help_msg, parse_mode=ParseMode.MARKDOWN)
+    
+    async def cmd_add_combos(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Add more combos to an active checking session"""
+        if not self.is_authorized(update.effective_user.id):
+            await update.message.reply_text("❌ Access Denied")
+            return
+        
+        if not self.is_running or not self.current_job:
+            await update.message.reply_text("⚠️ No active checking session. Start checking first with /check command.")
+            return
+        
+        await update.message.reply_text("""
+📋 **ADD COMBOS TO ACTIVE SESSION**
+
+🔥 **Current Session Running!**
+• Progress: {}/{} ({:.1f}%)
+• Hits: {}
+• Status: Active
+
+**To add more combos:**
+1️⃣ Send a .txt file with new combos
+2️⃣ Combos will be added to unchecked queue
+3️⃣ List will be sorted A-Z automatically
+4️⃣ Checking continues from current position
+
+**Important:**
+• Duplicates are automatically filtered
+• Only valid email:password format accepted
+• New combos go to end of queue (sorted)
+• Current progress is preserved
+
+Send your combo file now! 📎
+        """.format(
+            self.stats['checked'], 
+            self.stats['total'],
+            (self.stats['checked'] / self.stats['total'] * 100) if self.stats['total'] > 0 else 0,
+            self.stats['hits']
+        ), parse_mode=ParseMode.MARKDOWN)
+        
+        # Set a flag to indicate we're waiting for combo addition
+        if not hasattr(self, 'waiting_for_combos'):
+            self.waiting_for_combos = {}
+        self.waiting_for_combos[update.effective_chat.id] = True
+    
+    async def add_combos_to_session(self, new_combos: List[str], progress_msg):
+        """Add new combos to the active checking session"""
+        try:
+            if not self.current_job or not self.checker_engine:
+                await progress_msg.edit_text("❌ No active session to add combos to.")
+                return
+            
+            original_total = self.stats['total']
+            
+            # Get current combo list from the job
+            current_combo_list = self.current_job.get('combo_list', [])
+            
+            # Filter out duplicates and invalid format
+            valid_new_combos = []
+            duplicates = 0
+            invalid = 0
+            
+            # Create a set of existing combos for quick lookup
+            existing_combos = set(current_combo_list)
+            
+            for combo in new_combos:
+                if ':' not in combo:
+                    invalid += 1
+                    continue
+                if combo in existing_combos:
+                    duplicates += 1
+                    continue
+                valid_new_combos.append(combo)
+                existing_combos.add(combo)  # Add to set for future duplicate checking
+            
+            if not valid_new_combos:
+                await progress_msg.edit_text(f"""
+❌ **No Valid New Combos Added**
+
+📊 **Analysis:**
+• Total submitted: {len(new_combos):,}
+• Duplicates: {duplicates:,}
+• Invalid format: {invalid:,}
+• Valid new combos: 0
+
+All combos were either duplicates or invalid format.
+                """, parse_mode=ParseMode.MARKDOWN)
+                return
+            
+            # Add new combos to the list
+            updated_combo_list = current_combo_list + valid_new_combos
+            
+            # Sort the entire list A-Z to ensure consistent ordering
+            updated_combo_list.sort()
+            
+            # Update the job and stats
+            self.current_job['combo_list'] = updated_combo_list
+            self.stats['total'] = len(updated_combo_list)
+            
+            # Update the checker engine's combo list
+            if hasattr(self.checker_engine, 'combo_list'):
+                self.checker_engine.combo_list = updated_combo_list
+            
+            # Success message
+            await progress_msg.edit_text(f"""
+✅ **Combos Successfully Added!**
+
+📊 **Addition Summary:**
+• **New valid combos:** {len(valid_new_combos):,}
+• **Duplicates filtered:** {duplicates:,}
+• **Invalid filtered:** {invalid:,}
+• **Total submitted:** {len(new_combos):,}
+
+📈 **Updated Session:**
+• **Previous total:** {original_total:,}
+• **New total:** {self.stats['total']:,}
+• **Added:** {len(valid_new_combos):,} (+{len(valid_new_combos)/original_total*100:.1f}%)
+
+🔄 **Status:** Combos sorted A-Z and added to queue
+⚡ **Action:** Checking continues seamlessly
+
+Elite session enhanced! 🎖️
+            """, parse_mode=ParseMode.MARKDOWN)
+            
+            logger.info(f"Added {len(valid_new_combos)} new combos to active session. New total: {self.stats['total']}")
+            
+        except Exception as e:
+            logger.error(f"Error adding combos to session: {e}")
+            await progress_msg.edit_text(f"❌ Error adding combos to session: {str(e)}")
     
     async def send_message(self, chat_id: int, text: str, parse_mode=ParseMode.MARKDOWN):
         """Send message via Telegram"""
