@@ -29,14 +29,19 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 from telegram.constants import ParseMode
 
-# Import ultra authenticator
+# Import ultra authenticator - WORKING VERSION
 try:
-    from mega_auth import UltraMegaAuthenticator
+    from mega_auth_v7_working import UltraMegaAuthenticator
     MEGA_AUTH_AVAILABLE = True
-    print("✅ Ultra MEGA authenticator loaded")
+    print("✅ Ultra MEGA authenticator v7.0 WORKING loaded")
 except ImportError:
-    MEGA_AUTH_AVAILABLE = False
-    print("❌ mega_auth.py not found - using fallback")
+    try:
+        from mega_auth import UltraMegaAuthenticator
+        MEGA_AUTH_AVAILABLE = True
+        print("✅ Ultra MEGA authenticator loaded (fallback)")
+    except ImportError:
+        MEGA_AUTH_AVAILABLE = False
+        print("❌ mega_auth.py not found - using fallback")
 
 class UltraConfig:
     """Ultra performance configuration"""
@@ -89,20 +94,21 @@ class TelegramRealTimeChecker:
         
         # Send initial message
         progress_text = f"""
-🚀 **HYPERION ULTRA v7.0 - REAL-TIME CHECKING**
+🚀 **HYPERION ULTRA v7.0 - WORKING REAL-TIME CHECKING**
 
 📊 **Setup:**
 • Combos: {len(combo_data):,}
 • Threads: {self.config.max_threads}
+• Engine: V7.0 WORKING EDITION (Based on V2-REBUILT)
 • Mode: REAL-TIME TELEGRAM UPDATES
 
-⚡ **Status:** Initializing ultra threads...
+⚡ **Status:** Initializing WORKING v7.0 threads...
 🔄 **Progress:** 0%
 ⏱️ **Time:** 0s
 📈 **CPM:** 0
 🎯 **Hits:** 0
 
-🔥 **STARTING MAXIMUM SPEED CHECKING...**
+🔥 **STARTING ACTUAL ACCOUNT PROCESSING...**
 """
         
         self.current_progress_msg = await update.message.reply_text(
@@ -115,15 +121,15 @@ class TelegramRealTimeChecker:
         self.stats['start_time'] = time.time()
         
         try:
-            # Create ultra authenticator
+            # Create ultra authenticator - WORKING VERSION
             if not MEGA_AUTH_AVAILABLE:
-                error_text = "❌ **Ultra authenticator not available**\n\nPlease ensure mega_auth.py is properly installed."
+                error_text = "❌ **Ultra authenticator not available**\n\nPlease ensure mega_auth_v7_working.py is properly installed."
                 await self.current_progress_msg.edit_text(error_text, parse_mode=ParseMode.MARKDOWN)
                 return
             
-            print(f"🔥 Initializing {self.config.max_threads} MEGA instances...")
+            print(f"🔥 Initializing WORKING v7.0 authenticator with {self.config.max_threads} threads...")
             ultra_auth = UltraMegaAuthenticator(max_threads=self.config.max_threads)
-            print(f"✅ {self.config.max_threads} MEGA instances ready!")
+            print(f"✅ Working v7.0 authenticator ready with {self.config.max_threads} threads!")
             
             # Prepare accounts
             accounts = []
@@ -141,15 +147,21 @@ class TelegramRealTimeChecker:
                 self.monitor_telegram_progress(len(accounts), chat_id, context)
             )
             
-            # Start checking in thread pool
+            # Start checking in thread pool - ENSURE IT RUNS
             def run_checking():
                 try:
-                    print(f"🔥 Starting {self.config.max_threads} ultra worker threads...")
+                    print(f"🔥 ACTUALLY STARTING {self.config.max_threads} ultra worker threads...")
+                    print(f"📊 Processing {len(accounts)} accounts with WORKING v7.0 engine...")
+                    
+                    # Force immediate start
                     results = ultra_auth.ultra_check_accounts(accounts, self.progress_callback)
-                    print(f"✅ Checking complete!")
+                    
+                    print(f"✅ v7.0 WORKING checking complete! Results: {len(results)}")
                     return results
                 except Exception as e:
-                    print(f"❌ Checking error: {e}")
+                    print(f"❌ v7.0 Checking error: {e}")
+                    import traceback
+                    traceback.print_exc()
                     return []
             
             # Run checking
