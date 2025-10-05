@@ -256,11 +256,7 @@ Bot Version: v5.0 Fixed 🎯
             await self.application.updater.start_polling(
                 poll_interval=1.0,
                 timeout=10,
-                bootstrap_retries=5,
-                read_timeout=10,
-                write_timeout=10,
-                connect_timeout=10,
-                pool_timeout=20
+                bootstrap_retries=5
             )
             
             logger.info("✅ HYPERION Elite Bot is now ONLINE and polling for messages!")

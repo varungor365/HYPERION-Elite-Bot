@@ -69,11 +69,7 @@ async def main():
         await app.start()
         
         print("🔄 Starting polling...")
-        await app.updater.start_polling(
-            poll_interval=1.0,
-            timeout=10,
-            bootstrap_retries=3
-        )
+        await app.updater.start_polling()
         
         print("✅ HYPERION Test Bot is ONLINE!")
         print("📱 Send /start or /test to @megacheckk_bot")
