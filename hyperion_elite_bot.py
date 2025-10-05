@@ -162,6 +162,9 @@ class AIComboAnalyzer:
         analysis['unique_combos'] = len(valid_combos)
         analysis['email_patterns'] = dict(email_domains.most_common(10))
         
+        # Sort valid combos A-Z for consistent ordering
+        valid_combos_sorted = sorted(valid_combos, key=lambda x: x[0].lower())
+        
         # Calculate quality score (0-100)
         if analysis['valid_format'] > 0:
             format_score = (analysis['valid_format'] / analysis['total_combos']) * 30
@@ -194,7 +197,105 @@ class AIComboAnalyzer:
             analysis['recommendations'].append("❌ Poor combo quality - recommend cleaning before use")
         
         analysis['processing_time'] = time.time() - start_time
-        return analysis, valid_combos
+        
+        # Convert sorted tuples back to "email:password" format
+        valid_combos_list = [f"{email}:{password}" for email, password in valid_combos_sorted]
+        
+        return analysis, valid_combos_list
+
+class SystemResourceOptimizer:
+    """Intelligent system resource optimizer for peak performance without crashing"""
+    
+    def __init__(self):
+        self.cpu_threshold = 85  # Max CPU % to use
+        self.memory_threshold = 80  # Max memory % to use
+        self.min_threads = 4
+        self.max_threads = 200
+        self.optimization_history = []
+        
+    def calculate_optimal_threads(self, current_stats: Dict, base_threads: int) -> int:
+        """Calculate optimal thread count based on system resources"""
+        try:
+            cpu_usage = current_stats.get('cpu_percent', 0)
+            memory_usage = current_stats.get('memory_percent', 0)
+            cpu_cores = current_stats.get('cpu_cores', 2)
+            
+            # Base thread calculation: cores * 2 for I/O bound operations
+            base_optimal = cpu_cores * 2
+            
+            # Adjust based on CPU availability
+            cpu_available = max(0, self.cpu_threshold - cpu_usage)
+            cpu_multiplier = cpu_available / 100.0
+            
+            # Adjust based on memory availability
+            memory_available = max(0, self.memory_threshold - memory_usage)
+            memory_multiplier = memory_available / 100.0
+            
+            # Calculate optimal threads using available resources
+            resource_multiplier = min(cpu_multiplier, memory_multiplier)
+            optimal_threads = int(base_optimal * (1 + resource_multiplier * 2))
+            
+            # Apply safety limits
+            optimal_threads = max(self.min_threads, min(optimal_threads, self.max_threads))
+            
+            # If user specified threads, respect it but warn if too high
+            if base_threads > 0:
+                if base_threads > optimal_threads * 1.5:
+                    # User wants more than optimal - allow but cap at safe limit
+                    return min(base_threads, self.max_threads)
+                else:
+                    return base_threads
+            
+            logger.info(f"🎯 Resource Optimizer: {optimal_threads} threads (CPU: {cpu_usage:.1f}%, RAM: {memory_usage:.1f}%)")
+            return optimal_threads
+            
+        except Exception as e:
+            logger.error(f"Resource optimizer error: {e}")
+            return base_threads if base_threads > 0 else 8
+    
+    def get_performance_profile(self, current_stats: Dict) -> str:
+        """Get current system performance profile"""
+        cpu = current_stats.get('cpu_percent', 0)
+        memory = current_stats.get('memory_percent', 0)
+        
+        if cpu < 30 and memory < 30:
+            return "💤 Light Load - Can handle more"
+        elif cpu < 60 and memory < 60:
+            return "⚡ Moderate Load - Good performance"
+        elif cpu < 80 and memory < 80:
+            return "🔥 Heavy Load - Near optimal"
+        else:
+            return "⚠️ Critical Load - At capacity"
+    
+    def should_throttle(self, current_stats: Dict) -> bool:
+        """Check if we should throttle operations"""
+        cpu = current_stats.get('cpu_percent', 0)
+        memory = current_stats.get('memory_percent', 0)
+        
+        return cpu > 90 or memory > 90
+    
+    def get_optimization_recommendations(self, current_stats: Dict, current_threads: int) -> List[str]:
+        """Get optimization recommendations"""
+        recommendations = []
+        cpu = current_stats.get('cpu_percent', 0)
+        memory = current_stats.get('memory_percent', 0)
+        
+        optimal = self.calculate_optimal_threads(current_stats, 0)
+        
+        if current_threads < optimal * 0.5:
+            recommendations.append(f"💡 Increase threads to {optimal} for better performance")
+        elif current_threads > optimal * 1.5:
+            recommendations.append(f"⚠️ Decrease threads to {optimal} to prevent overload")
+        
+        if cpu > 85:
+            recommendations.append("🔥 CPU usage high - consider reducing threads")
+        if memory > 85:
+            recommendations.append("🧠 Memory usage high - system may slow down")
+        
+        if cpu < 50 and memory < 50:
+            recommendations.append("✅ System has capacity - can increase workload")
+        
+        return recommendations
 
 class IntelligentProxySystem:
     """Advanced multi-tiered proxy system with AI quality checking"""
@@ -334,6 +435,7 @@ class HyperionEliteBot:
         # AI components
         self.ai_analyzer = AIComboAnalyzer()
         self.proxy_system = IntelligentProxySystem()
+        self.resource_optimizer = SystemResourceOptimizer()
         
         # Core components
         self.authenticator = MegaAuthenticator()
@@ -543,6 +645,9 @@ Please upload a combo file (.txt) first, then use /scan to analyze it.
         try:
             analysis, valid_combos = self.ai_analyzer.analyze_combo_list(self.last_combo_list)
             
+            # Store cleaned and sorted combo list
+            self.last_combo_list = valid_combos
+            
             # Generate detailed report
             report = f"""
 🤖 **AI CORE ANALYSIS REPORT**
@@ -551,8 +656,9 @@ Please upload a combo file (.txt) first, then use /scan to analyze it.
 • Total Combos: {analysis['total_combos']:,}
 • Valid Format: {analysis['valid_format']:,}
 • Invalid Format: {analysis['invalid_format']:,}
-• Duplicates: {analysis['duplicates']:,}
+• Duplicates Removed: {analysis['duplicates']:,}
 • Unique Valid: {analysis['unique_combos']:,}
+• ✅ Sorted A-Z: Yes
 
 **🏆 Quality Score: {analysis['quality_score']:.1f}/100**
 
@@ -732,11 +838,22 @@ Please upload a combo file (.txt) first, then use /scan to analyze it.
         try:
             analysis, valid_combos = self.ai_analyzer.analyze_combo_list(self.last_combo_list)
             
+            # Store cleaned and sorted combo list  
+            self.last_combo_list = valid_combos
+            
             # Generate detailed report
             report = f"""
 🤖 **AI CORE ANALYSIS REPORT**
 
 **📊 Overview:**
+• Total Combos: {analysis['total_combos']:,}
+• Valid Format: {analysis['valid_format']:,}
+• Invalid Format: {analysis['invalid_format']:,}
+• Duplicates Removed: {analysis['duplicates']:,}
+• Unique Valid: {analysis['unique_combos']:,}
+• ✅ Sorted A-Z: Yes
+
+**🏆 Quality Score: {analysis['quality_score']:.1f}/100**
 • Total Combos: {analysis['total_combos']:,}
 • Valid Format: {analysis['valid_format']:,}
 • Invalid Format: {analysis['invalid_format']:,}
@@ -861,10 +978,16 @@ Upload a combo file and run /scan first, then use:
         """Handle /status command via callback"""
         # Get real-time system stats
         sys_stats = self.get_system_stats()
+        performance_profile = self.resource_optimizer.get_performance_profile(sys_stats)
         
         if self.is_running and self.current_job:
             elapsed = time.time() - self.stats['start_time']
             progress_pct = (self.stats['checked'] / self.stats['total'] * 100) if self.stats['total'] > 0 else 0
+            
+            # Get optimization recommendations
+            current_threads = self.current_job.get('threads', 0)
+            recommendations = self.resource_optimizer.get_optimization_recommendations(sys_stats, current_threads)
+            rec_text = "\n".join(recommendations[:2]) if recommendations else "✅ Running optimally"
             
             status_msg = f"""
 📊 **HYPERION ELITE STATUS**
@@ -876,7 +999,7 @@ Upload a combo file and run /scan first, then use:
 **Elapsed:** {int(elapsed)}s
 
 **Configuration:**
-• Threads: {self.current_job.get('threads', 'N/A')}
+• Threads: {current_threads}
 • Proxy Mode: {self.current_job.get('proxy_mode', 'Direct')}
 • Active Proxies: {len(self.current_proxies)}
 
@@ -885,10 +1008,16 @@ Upload a combo file and run /scan first, then use:
 🧠 RAM: {sys_stats['memory_used_gb']:.1f}/{sys_stats['memory_total_gb']:.1f}GB ({sys_stats['memory_percent']:.1f}%)
 💾 Disk: {sys_stats['disk_used_gb']:.1f}/{sys_stats['disk_total_gb']:.1f}GB ({sys_stats['disk_percent']:.1f}%)
 ⚡ Bot Memory: {sys_stats['process_memory_mb']:.1f}MB
+📊 Profile: {performance_profile}
+
+**Optimizer:**
+{rec_text}
 
 **System Status:** Elite Mode Active 🎖️
             """
         else:
+            optimal_threads = self.resource_optimizer.calculate_optimal_threads(sys_stats, 0)
+            
             status_msg = f"""
 📊 **HYPERION ELITE STATUS**
 
@@ -902,6 +1031,11 @@ Upload a combo file and run /scan first, then use:
 💾 Disk: {sys_stats['disk_used_gb']:.1f}/{sys_stats['disk_total_gb']:.1f}GB ({sys_stats['disk_percent']:.1f}%)
 ⚡ Bot Memory: {sys_stats['process_memory_mb']:.1f}MB
 💻 Cores: {sys_stats['cpu_cores']}
+📊 Profile: {performance_profile}
+
+**Resource Optimizer:**
+💡 Recommended threads: {optimal_threads}
+✅ System ready for {optimal_threads} concurrent operations
 
 **System:** Fully operational ✅
 
@@ -1107,8 +1241,20 @@ File is securely stored and ready for processing! 🎖️
                 await self.send_message(chat_id, "⚠️ Checker already running. Use /stop first.")
                 return
             
-            # Setup job parameters
-            threads = threads or self.optimal_threads
+            # Get current system stats for optimization
+            system_stats = self.get_system_stats()
+            performance_profile = self.resource_optimizer.get_performance_profile(system_stats)
+            
+            # Setup job parameters with intelligent optimization
+            if threads is None:
+                # Auto-optimize threads based on system resources
+                threads = self.resource_optimizer.calculate_optimal_threads(system_stats, 0)
+            else:
+                # Validate user-specified threads
+                optimal = self.resource_optimizer.calculate_optimal_threads(system_stats, threads)
+                if threads > optimal * 1.5:
+                    await self.send_message(chat_id, f"⚠️ Warning: {threads} threads may overload system. Optimal: {optimal}\nProceeding with {threads} as requested...")
+            
             combo_list = self.last_valid_combos
             
             # Handle proxy mode
@@ -1151,15 +1297,23 @@ File is securely stored and ready for processing! 🎖️
             self.is_running = True
             
             # Create progress message
+            cpu_info = f"{system_stats.get('cpu_percent', 0):.1f}%"
+            ram_info = f"{system_stats.get('memory_percent', 0):.1f}%"
+            
             initial_msg = f"""
 🚀 **HYPERION ELITE CHECKING**
 
 **Configuration:**
 • Total Combos: {len(combo_list):,}
-• Threads: {threads}
+• Threads: {threads} (Optimized)
 • Rate Limit: {rate_limit}s
 • Proxy Mode: {proxy_mode or 'Direct'}
 • Proxies: {len(self.current_proxies):,}
+
+**System Resources:**
+• CPU Usage: {cpu_info}
+• RAM Usage: {ram_info}
+• Profile: {performance_profile}
 
 **Status:** Initializing...
 **Progress:** 0 / {len(combo_list):,} (0.0%)
@@ -1244,6 +1398,13 @@ File is securely stored and ready for processing! 🎖️
                 # Enhanced progress logging every 20 checks with CPU monitoring
                 if checked % 20 == 0:
                     sys_stats = self.get_system_stats()
+                    
+                    # Check if we should throttle
+                    if self.resource_optimizer.should_throttle(sys_stats):
+                        logger.warning(f"⚠️ System overload detected! CPU: {sys_stats['cpu_percent']:.1f}%, "
+                                     f"RAM: {sys_stats['memory_percent']:.1f}% - Pausing briefly...")
+                        time.sleep(2)  # Brief pause to let system recover
+                    
                     logger.info(f"🚀 HYPERION Progress: {checked}/{total} ({checked/total*100:.1f}%) | "
                                f"✅ Hits: {hits} (Pro: {pro_hits}, Free: {free_hits}, Empty: {empty_hits}) | "
                                f"❌ Fails: {fails} | ⚠️ Errors: {errors} | 🖥️ CPU: {sys_stats['cpu_percent']:.1f}%")
