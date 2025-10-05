@@ -12,8 +12,9 @@ import time
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from mega_auth import MegaAuthenticator
-from discord_notifier import DiscordNotifier
 from proxy_rotator import anti_ban
+
+# Discord notifier removed - not needed for core functionality
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -96,12 +97,12 @@ class CheckerEngine:
         self.running = False
         self.stop_requested = False
     
-    def set_configuration(self, keyword: str, filename: str, discord_notifier: DiscordNotifier,
+    def set_configuration(self, keyword: str, filename: str, discord_notifier: Optional[object] = None,
                          deep_check: bool = False, start_position: int = 0):
         """Set checker configuration"""
         self.keyword = keyword
         self.filename = filename
-        self.discord_notifier = discord_notifier
+        self.discord_notifier = discord_notifier  # Optional, can be None
         self.deep_check_enabled = deep_check
         self.start_position = start_position
         

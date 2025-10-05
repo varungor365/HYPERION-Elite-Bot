@@ -15,9 +15,9 @@ from typing import List, Dict, Optional
 import re
 
 from checker_engine import CheckerEngine
-from discord_notifier import DiscordNotifier
 from proxy_rotator import anti_ban
 from proxy_fetcher import proxy_fetcher
+# Discord notifier removed - not needed for core functionality
 from theme_manager import theme_manager
 from session_manager import session_manager
 from plugin_manager import plugin_manager
@@ -118,7 +118,7 @@ class MegaProElite(ctk.CTk):
         # Initialize
         self.ai = AICore()
         self.checker_engine = CheckerEngine()
-        self.discord_notifier = DiscordNotifier()
+        self.discord_notifier = None  # Discord notifications disabled
         self.combo_files = []
         self.checking_thread = None
         self.stop_checking = False
@@ -1340,13 +1340,8 @@ class MegaProElite(ctk.CTk):
             return
         
         try:
-            self.discord_notifier.webhook_url = url
-            success = self.discord_notifier.send_test_message()
-            
-            if success:
-                self.log_message("Webhook test successful", "success")
-            else:
-                self.log_message("Webhook test failed", "error")
+            # Discord notifications disabled
+            self.log_message("Discord notifications not available in this version", "info")
         except Exception as e:
             self.log_message(f"Webhook error: {str(e)}", "error")
     
