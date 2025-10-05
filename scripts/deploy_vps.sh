@@ -71,7 +71,7 @@ cd /tmp
 if [[ -d "HYPERION-Elite-Bot" ]]; then
     rm -rf HYPERION-Elite-Bot
 fi
-git clone https://github.com/YourUsername/HYPERION-Elite-Bot.git
+git clone https://github.com/varungor365/HYPERION-Elite-Bot.git
 cp -r HYPERION-Elite-Bot/* $BOT_DIR/
 chown -R $BOT_USER:$BOT_USER $BOT_DIR
 

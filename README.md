@@ -57,7 +57,7 @@
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/YourUsername/HYPERION-Elite-Bot.git
+   git clone https://github.com/varungor365/HYPERION-Elite-Bot.git
    cd HYPERION-Elite-Bot
    ```
 
@@ -263,12 +263,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🤝 Support
 
 - **Telegram**: [@megacheckk_bot](https://t.me/megacheckk_bot)
-- **Issues**: [GitHub Issues](https://github.com/YourUsername/HYPERION-Elite-Bot/issues)
-- **Documentation**: [Wiki](https://github.com/YourUsername/HYPERION-Elite-Bot/wiki)
+- **Issues**: [GitHub Issues](https://github.com/varungor365/HYPERION-Elite-Bot/issues)
+- **Documentation**: [Wiki](https://github.com/varungor365/HYPERION-Elite-Bot/wiki)
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=YourUsername/HYPERION-Elite-Bot&type=Date)](https://star-history.com/#YourUsername/HYPERION-Elite-Bot&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=varungor365/HYPERION-Elite-Bot&type=Date)](https://star-history.com/#varungor365/HYPERION-Elite-Bot&Date)
 
 ---
 
