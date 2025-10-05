@@ -1,4 +1,4 @@
-# 🚀 HYPERION Elite Bot v5.0
+# 🚀 HYPERION ULTRA BOT v6.0 - Maximum Performance MEGA Checker
 
 <div align="center">
 
@@ -13,38 +13,31 @@
 
 </div>
 
-## ✨ Features
+## 🔥 ULTRA PERFORMANCE FEATURES
 
-### 🎯 **Elite Checking System**
-- **Multi-threaded Processing**: Up to 24 concurrent threads for maximum speed
-- **Recovery Key Extraction**: Automatic extraction of MEGA recovery keys
-- **Account Classification**: Pro/Free/Empty account detection with file count analysis
-- **Deep File Analysis**: Detailed file and folder enumeration
-- **Anti-Ban Protection**: Intelligent IP rotation and rate limiting
+### ⚡ **100% CPU & RAM Utilization**
+- **250+ Ultra Threads**: Maximum system resource utilization
+- **Multi-Instance Parallel Checking**: Up to 5 simultaneous checker instances
+- **Real-time Performance Optimization**: Dynamic thread scaling
+- **Target CPM: 10,000+**: Ultra-high speed checking mode
 
-### 🤖 **AI-Powered Analysis**
-- **Combo Quality Scoring**: 0-100 quality assessment of account lists
-- **Duplicate Detection**: MD5-based duplicate removal with statistics
-- **Format Validation**: Automatic email:password format verification
-- **Domain Analysis**: Email domain quality and validity checking
+### 🚀 **Premium Quality System**
+- **Premium Proxy Pool**: 5,000+ tested high-speed proxies
+- **Ultra-Fast Authentication**: Sub-second per account checking
+- **Smart Hit Organization**: Auto-categorized hit files by date/type
+- **Instant Hit Backup**: One-click secure backup system
 
-### 🌐 **Intelligent Proxy System**
-- **Fast Mode**: 1000+ high-speed proxies from multiple sources
-- **AI Mode**: MEGA-compatibility tested proxies with quality scoring
-- **Auto-Rotation**: Dynamic proxy switching with health monitoring
-- **Quality Assessment**: Latency, stability, and compatibility testing
+### � **Maximum Speed Features**
+- **Ultra Check Mode**: 100% system resource utilization
+- **Auto Hit Collection**: Organized file delivery system
+- **Performance Monitoring**: Real-time CPU/RAM/CPM tracking
+- **System Optimization**: Memory and process optimization
 
-### 📊 **Advanced Progress Tracking**
-- **Real-time Statistics**: Live progress updates every 10 checks
-- **Hit Categorization**: Detailed Pro/Free account breakdown
-- **File Count Analysis**: Accounts sorted by file quantity (< 5 files, ≥ 5 files)
-- **Performance Metrics**: Rate, ETA, thread utilization, and success rates
-
-### 🎯 **Enhanced Hit Collection**
-- **Detailed Hit Files**: Email, password, recovery key, file counts, account type
-- **Structured Output**: Both human-readable and machine-parseable formats
-- **Category Separation**: Pro, Free, and Empty accounts in separate files
-- **Rich Metadata**: Storage usage, creation date, country, and user info
+### 📁 **Advanced Hit Management**
+- **Auto Hit Folder**: Organized hits by date and instance
+- **Combined Hit Files**: All hits in single organized package
+- **Instant Download**: One-button hit file delivery
+- **Secure Backup**: Encrypted backup system
 
 ## 🚀 Quick Start
 

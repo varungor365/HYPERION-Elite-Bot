@@ -1,0 +1,37 @@
+[Unit]
+Description=HYPERION Ultra Performance Bot v6.0 - Maximum Speed MEGA Checker
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/HYPERION-Elite-Bot
+Environment=PYTHONPATH=/opt/HYPERION-Elite-Bot
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 hyperion_ultra_performance.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Performance Optimizations
+Nice=-10
+IOSchedulingClass=1
+IOSchedulingPriority=4
+CPUSchedulingPolicy=1
+CPUSchedulingPriority=50
+
+# Resource Limits (Maximum utilization)
+LimitNOFILE=65536
+LimitNPROC=32768
+LimitCORE=infinity
+
+# Memory and CPU optimization
+OOMScoreAdjust=-500
+Environment=MALLOC_ARENA_MAX=2
+Environment=MALLOC_MMAP_THRESHOLD_=131072
+Environment=MALLOC_TRIM_THRESHOLD_=131072
+Environment=MALLOC_MMAP_MAX_=65536
+
+[Install]
+WantedBy=multi-user.target
