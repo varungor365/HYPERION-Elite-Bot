@@ -18,21 +18,10 @@ print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 echo -e "${BLUE}🚀 HYPERION Elite Bot - VPS Deployment${NC}"
 echo "=================================================="
 
-# Get bot credentials
-if [[ -z "$TELEGRAM_BOT_TOKEN" ]]; then
-    echo -e "${BLUE}Enter your Telegram Bot Token:${NC}"
-    read -r TELEGRAM_BOT_TOKEN
-fi
-
-if [[ -z "$AUTHORIZED_USER_ID" ]]; then
-    echo -e "${BLUE}Enter your Telegram User ID:${NC}"
-    read -r AUTHORIZED_USER_ID
-fi
-
-if [[ -z "$TELEGRAM_BOT_TOKEN" ]] || [[ -z "$AUTHORIZED_USER_ID" ]]; then
-    print_error "Bot token and user ID are required!"
-    exit 1
-fi
+# Bot credentials are hardcoded in the config - no input needed
+print_success "Bot credentials are pre-configured in the code!"
+TELEGRAM_BOT_TOKEN="7090420579:AAEmOwaBrySWXdqT7jyXybmjBOMKfOy3pM"
+AUTHORIZED_USER_ID="@megacheckk_bot"
 
 # Update system
 print_status "Updating system packages..."

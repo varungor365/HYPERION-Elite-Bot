@@ -102,20 +102,34 @@ class HyperionConfig:
     
     def get_telegram_token(self) -> str:
         """Get Telegram bot token"""
+        # Hardcoded bot token - no need to set environment variable
+        hardcoded_token = "7090420579:AAEmOwaBrySWXdqT7jyXybmjBOMKfOy3pM"
+        
         token = self.get('TELEGRAM_BOT_TOKEN')
         if not token or token == 'your_bot_token_here':
-            raise ValueError("Telegram bot token not configured! Please set TELEGRAM_BOT_TOKEN environment variable.")
+            # Use hardcoded token if environment variable not set
+            return hardcoded_token
         return token
     
     def get_authorized_user_id(self) -> Optional[int]:
         """Get authorized user ID"""
+        # Hardcoded authorized user ID - no need to set environment variable
+        hardcoded_user_id = "@megacheckk_bot"  # This will be converted to actual ID by the bot
+        
         user_id = self.get('AUTHORIZED_USER_ID')
         if user_id and user_id != 'your_telegram_user_id_here':
             try:
                 return int(user_id)
             except ValueError:
                 logger.warning(f"Invalid user ID format: {user_id}")
-        return None
+        
+        # Return hardcoded user (can be username or ID)
+        try:
+            if isinstance(hardcoded_user_id, str) and hardcoded_user_id.startswith('@'):
+                return hardcoded_user_id  # Return username, bot will handle conversion
+            return int(hardcoded_user_id)
+        except ValueError:
+            return hardcoded_user_id
     
     def get_performance_settings(self) -> Dict[str, Any]:
         """Get performance-related settings"""
@@ -143,6 +157,25 @@ class HyperionConfig:
     def is_performance_logging_enabled(self) -> bool:
         """Check if performance logging is enabled"""
         return self.get_bool('PERFORMANCE_LOGGING', True)
+    
+    def get_authorized_users(self) -> list:
+        """Get list of authorized user IDs"""
+        # Hardcoded authorized users - add more IDs here as needed
+        hardcoded_users = [
+            796354588,  # Main authorized user ID
+            # Add more user IDs here: 123456789, 987654321, etc.
+        ]
+        
+        # Also check environment variable for additional users
+        users_str = self.get('AUTHORIZED_USERS', '')
+        if users_str:
+            try:
+                env_users = [int(user.strip()) for user in users_str.split(',') if user.strip().isdigit()]
+                hardcoded_users.extend(env_users)
+            except ValueError:
+                logger.warning("Invalid AUTHORIZED_USERS format in environment")
+        
+        return list(set(hardcoded_users))  # Remove duplicates
 
 # Global configuration instance
 config = HyperionConfig()
