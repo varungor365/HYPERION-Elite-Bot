@@ -1,26 +1,49 @@
-# Use Alpine Linux for minimal size
-FROM python:3.12-alpine
+# 🚀 HYPERION Elite Bot - 24/7 Production Docker Image
+FROM python:3.11-slim
+
+# Set metadata
+LABEL maintainer="HYPERION Elite Bot"
+LABEL version="5.1"
+LABEL description="Elite Telegram Bot for Account Checking - 24/7 Production Ready"
 
 # Set working directory
 WORKDIR /app
 
+# Set environment variables for production
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install system dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     gcc \
-    musl-dev \
+    g++ \
     libffi-dev \
-    openssl-dev \
+    libssl-dev \
     git \
-    curl
+    curl \
+    wget \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
-RUN adduser -D -s /bin/sh hyperion
+RUN useradd --create-home --shell /bin/bash hyperion
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Copy requirements first for better Docker layer caching
+COPY requirements.txt requirements-no-conflict.txt ./
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies with conflict resolution
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir python-telegram-bot==22.5 && \
+    pip install --no-cache-dir aiohttp>=3.12.0 aiofiles>=23.2.0 httpx>=0.25.0 && \
+    pip install --no-cache-dir pandas>=2.1.0 numpy>=1.24.0 && \
+    pip install --no-cache-dir python-dotenv>=1.0.0 cryptography>=41.0.0 && \
+    pip install --no-cache-dir PySocks>=1.7.1 colorama>=0.4.6 && \
+    pip install --no-cache-dir requests>=2.31.0 "urllib3<2.0.0,>=1.26.0" && \
+    pip install --no-cache-dir "tenacity>=8.0.0,<9.0.0" && \
+    pip install --no-cache-dir mega.py==1.0.8 --no-deps && \
+    pip install --no-cache-dir pycryptodome pathlib && \
+    pip install --no-cache-dir tqdm rich backoff bcrypt loguru psutil
 
 # Copy application code
 COPY . .
@@ -37,14 +60,15 @@ USER hyperion
 # Expose port (if needed for web interface)
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('https://api.telegram.org', timeout=5)" || exit 1
+# Health check to monitor bot status every minute
+HEALTHCHECK --interval=60s --timeout=15s --start-period=30s --retries=5 \
+    CMD python3 -c "import requests; requests.get('https://api.telegram.org/bot7090420579:AAEmOwaErySWXdgT7jyXybYmjbOMKFOy3pM/getMe', timeout=10)" || exit 1
 
-# Environment variables
+# Environment variables for production
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV TZ=UTC
 
-# Default command (headless mode)
-CMD ["python", "hyperion_headless.py"]
+# Default command - run bot in headless production mode
+CMD ["python3", "hyperion_headless.py"]

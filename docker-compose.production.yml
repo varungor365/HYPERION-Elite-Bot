@@ -5,26 +5,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.production
-    container_name: hyperion-elite-bot
-    restart: unless-stopped
+    container_name: hyperion-elite-bot-24x7
+    restart: always
     
     environment:
-      # Load from .env file or set directly
-      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
-      - AUTHORIZED_USERS=${AUTHORIZED_USERS:-796354588}
-      - MEGA_TIMEOUT=${MEGA_TIMEOUT:-30}
-      - MAX_THREADS=${MAX_THREADS:-8}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - PROXY_ENABLED=${PROXY_ENABLED:-false}
-      - PROXY_LIST=${PROXY_LIST:-}
+      # No environment variables needed - all hardcoded for zero-config
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - TZ=UTC
     
     volumes:
-      # Persistent logs
-      - ./logs:/var/log/hyperion
-      # Configuration (optional)
-      - ./.env:/app/.env:ro
-      # Data persistence (if needed)
-      - ./data:/app/data
+      # Persistent storage for 24/7 operation
+      - hyperion-hits:/app/hits
+      - hyperion-logs:/app/logs
+      - hyperion-temp:/app/temp
     
     networks:
       - hyperion-network
