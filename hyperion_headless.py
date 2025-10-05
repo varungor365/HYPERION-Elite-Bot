@@ -310,7 +310,8 @@ Starting headless operations...
     if not TELEGRAM_AVAILABLE:
         logger.error("❌ Telegram libraries not installed!")
         logger.error("Install with: pip install python-telegram-bot")
-        return
+        logger.error("❌ Bot cannot start without telegram libraries")
+        raise ImportError("python-telegram-bot not available")
     
     # Load secure configuration
     try:
@@ -328,6 +329,11 @@ Starting headless operations...
             # Fallback to hardcoded token
             telegram_token = "7090420579:AAEmOwaErySWXdgT7jyXybYmjbOMKFOy3pM"
             logger.warning("⚠️ Using fallback hardcoded token")
+            
+        # Ensure we always have a token
+        if not telegram_token:
+            telegram_token = "7090420579:AAEmOwaErySWXdgT7jyXybYmjbOMKFOy3pM"
+            logger.warning("⚠️ Using emergency hardcoded token")
             
     except ImportError as e:
         logger.error(f"❌ Import error: {e}")
@@ -347,10 +353,16 @@ Starting headless operations...
     signal.signal(signal.SIGINT, bot.signal_handler)
     signal.signal(signal.SIGTERM, bot.signal_handler)
     
+    # Run the bot with retry logic
+    logger.info("🚀 Starting bot with token: {}...".format(telegram_token[:20]))
+    
     try:
         await bot.run_headless_bot()
     except Exception as e:
-        logger.error(f"Headless bot error: {e}")
+        import traceback
+        logger.error(f"❌ Headless bot error: {e}")
+        logger.error(f"❌ Full traceback: {traceback.format_exc()}")
+        raise  # Re-raise so the main loop can handle it
 
 if __name__ == "__main__":
     # Ensure we're running in headless mode
@@ -358,10 +370,22 @@ if __name__ == "__main__":
         logger.warning("⚠️ Display detected - forcing headless mode")
         os.environ.pop('DISPLAY', None)
     
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("🛑 Headless bot stopped by user")
-    except Exception as e:
-        logger.error(f"💥 Fatal error: {e}")
-        sys.exit(1)
+    # Keep trying to start the bot
+    while True:
+        try:
+            logger.info("🎯 Attempting to start HYPERION Elite Bot...")
+            asyncio.run(main())
+            break  # If we get here, bot started successfully
+        except KeyboardInterrupt:
+            logger.info("🛑 Headless bot stopped by user")
+            break
+        except ImportError as e:
+            logger.error(f"💥 Import error - cannot continue: {e}")
+            sys.exit(1)
+        except Exception as e:
+            import traceback
+            logger.error(f"💥 Fatal error: {e}")
+            logger.error(f"💥 Full traceback: {traceback.format_exc()}")
+            logger.info("🔄 Retrying in 10 seconds...")
+            import time
+            time.sleep(10)
