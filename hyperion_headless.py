@@ -25,7 +25,12 @@ import platform
 import zipfile
 import re
 import hashlib
-import requests
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
+    print("⚠️ requests module not available. Some features may be limited.")
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple

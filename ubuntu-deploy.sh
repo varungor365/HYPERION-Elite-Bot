@@ -39,10 +39,18 @@ echo "█                                                  █"
 echo "████████████████████████████████████████████████████"
 echo -e "${NC}"
 
-# Check if running as root
+# Check if running as root and warn but allow
 if [[ $EUID -eq 0 ]]; then
-   print_error "Please don't run this script as root. Run as regular user with sudo access."
-   exit 1
+   print_warning "Running as root. Creating a dedicated user for the bot..."
+   # Create hyperion user if not exists
+   if ! id "hyperion" &>/dev/null; then
+       useradd -m -s /bin/bash hyperion
+       usermod -aG sudo hyperion
+       print_success "Created user 'hyperion' for bot operations"
+   fi
+   BOT_USER="hyperion"
+else
+   BOT_USER="$USER"
 fi
 
 # Get user input for bot credentials
@@ -99,8 +107,12 @@ else
     sudo git clone https://github.com/varungor365/HYPERION-Elite-Bot.git
 fi
 
-# Change ownership
-sudo chown -R $USER:$USER $BOT_DIR
+# Change ownership to bot user
+if [[ $EUID -eq 0 ]]; then
+    chown -R $BOT_USER:$BOT_USER $BOT_DIR
+else
+    sudo chown -R $BOT_USER:$BOT_USER $BOT_DIR
+fi
 cd $BOT_DIR
 
 # Create virtual environment
@@ -127,7 +139,13 @@ chmod 600 .env
 
 # Create systemd service
 print_status "Setting up systemd service..."
-sudo tee /etc/systemd/system/hyperion-elite-bot.service > /dev/null << EOF
+# Create systemd service with proper permissions
+SERVICE_CMD="tee /etc/systemd/system/hyperion-elite-bot.service > /dev/null"
+if [[ $EUID -ne 0 ]]; then
+    SERVICE_CMD="sudo $SERVICE_CMD"
+fi
+
+$SERVICE_CMD << EOF
 [Unit]
 Description=HYPERION Elite Bot - Advanced MEGA Checker
 After=network.target
@@ -135,8 +153,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=$USER
-Group=$USER
+User=$BOT_USER
+Group=$BOT_USER
 WorkingDirectory=$BOT_DIR
 Environment=PATH=$BOT_DIR/.venv/bin
 EnvironmentFile=$BOT_DIR/.env
