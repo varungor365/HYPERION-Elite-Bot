@@ -36,13 +36,28 @@ from collections import Counter
 import math
 
 # Enhanced logging for production
+import os
+
+# Configure logging handlers with proper fallback
+handlers = [logging.StreamHandler(sys.stdout)]
+
+# Try to use system log directory, fallback to local file
+try:
+    if os.path.exists('/var/log'):
+        os.makedirs('/var/log/hyperion', exist_ok=True)
+        handlers.append(logging.FileHandler('/var/log/hyperion/hyperion_elite.log', encoding='utf-8'))
+        print("✅ Using system log directory: /var/log/hyperion/")
+    else:
+        raise PermissionError("System log directory not available")
+except (PermissionError, OSError):
+    # Fallback to local logging
+    handlers.append(logging.FileHandler('hyperion_elite.log', encoding='utf-8'))
+    print("ℹ️ Using local log file: hyperion_elite.log")
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('/var/log/hyperion/hyperion_elite.log', encoding='utf-8'),
-        logging.StreamHandler(sys.stdout)
-    ]
+    handlers=handlers
 )
 logger = logging.getLogger(__name__)
 
