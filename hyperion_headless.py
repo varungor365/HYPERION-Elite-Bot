@@ -314,13 +314,31 @@ Starting headless operations...
     
     # Load secure configuration
     try:
+        import sys
+        import os
+        logger.info(f"🔍 Python path: {sys.path}")
+        logger.info(f"🔍 Current directory: {os.getcwd()}")
+        
         from hyperion_config import config
         telegram_token = config.get_telegram_token()
-        logger.info("✅ Configuration loaded successfully")
+        logger.info(f"✅ Configuration loaded successfully")
+        logger.info(f"✅ Bot token loaded: {telegram_token[:20]}..." if telegram_token else "❌ No token")
+        
+        if not telegram_token:
+            # Fallback to hardcoded token
+            telegram_token = "7090420579:AAEmOwaErySWXdgT7jyXybYmjbOMKFOy3pM"
+            logger.warning("⚠️ Using fallback hardcoded token")
+            
+    except ImportError as e:
+        logger.error(f"❌ Import error: {e}")
+        logger.warning("⚠️ Using fallback hardcoded token")
+        telegram_token = "7090420579:AAEmOwaErySWXdgT7jyXybYmjbOMKFOy3pM"
     except Exception as e:
+        import traceback
         logger.error(f"❌ Configuration error: {e}")
-        logger.error("Please check your .env file or environment variables")
-        return
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
+        logger.warning("⚠️ Using fallback hardcoded token")
+        telegram_token = "7090420579:AAEmOwaErySWXdgT7jyXybYmjbOMKFOy3pM"
     
     # Create and run headless bot
     bot = HeadlessHyperionBot(telegram_token)
