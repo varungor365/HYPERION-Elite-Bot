@@ -1,0 +1,54 @@
+# HYPERION Elite Bot Dependencies
+
+# Core Bot Framework
+python-telegram-bot==20.7
+telegram==0.0.1
+
+# MEGA.nz Integration
+mega.py==1.0.8
+requests==2.31.0
+urllib3==2.0.7
+
+# Async & Threading
+asyncio-mqtt==0.13.0
+aiofiles==23.2.1
+concurrent-futures==3.1.1
+
+# Data Processing & Analysis
+pandas==2.1.4
+numpy==1.24.4
+hashlib2==1.0.1
+
+# Proxy & Network
+aiohttp==3.9.1
+httpx==0.25.2
+socks==1.7.1
+requests-socks==1.0
+
+# Utilities
+python-dotenv==1.0.0
+colorama==0.4.6
+tqdm==4.66.1
+rich==13.7.0
+
+# Error Handling & Retry
+tenacity==8.2.3
+backoff==2.2.1
+
+# Security
+cryptography==41.0.8
+bcrypt==4.1.2
+
+# Logging & Monitoring
+loguru==0.7.2
+psutil==5.9.6
+
+# Development & Testing (Optional)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.11.0
+flake8==6.1.0
+
+# Cloud & Docker (Optional)
+docker==6.1.3
+kubernetes==28.1.0
