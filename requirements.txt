@@ -26,8 +26,7 @@ python-dotenv>=1.0.0
 cryptography>=41.0.0
 
 # Proxy & Network Tools
-requests-socks>=1.0
-socks>=1.7.0
+PySocks>=1.7.1
 
 # System & Performance
 tenacity>=9.0.0
