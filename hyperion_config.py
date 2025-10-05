@@ -70,15 +70,9 @@ class HyperionConfig:
     
     def _validate_config(self):
         """Validate required configuration"""
-        required_vars = ['TELEGRAM_BOT_TOKEN']
-        
-        missing_vars = []
-        for var in required_vars:
-            if not self.get(var):
-                missing_vars.append(var)
-        
-        if missing_vars:
-            raise ValueError(f"Missing required configuration: {', '.join(missing_vars)}")
+        # Since we have hardcoded credentials, validation always passes
+        # This allows zero-config deployment
+        pass
     
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value"""
@@ -102,14 +96,16 @@ class HyperionConfig:
     
     def get_telegram_token(self) -> str:
         """Get Telegram bot token"""
-        # Hardcoded bot token - no need to set environment variable
-        hardcoded_token = "7090420579:AAEmOwaBrySWXdqT7jyXybmjBOMKfOy3pM"
+        # Hardcoded bot token - always use this for zero-config deployment
+        hardcoded_token = "7090420579:AAEmOwaErySWXdgT7jyXybYmjbOMKFOy3pM"
         
+        # Check environment variable first (for manual overrides)
         token = self.get('TELEGRAM_BOT_TOKEN')
-        if not token or token == 'your_bot_token_here':
-            # Use hardcoded token if environment variable not set
-            return hardcoded_token
-        return token
+        if token and token != 'your_bot_token_here':
+            return token
+        
+        # Always return hardcoded token if no valid env var
+        return hardcoded_token
     
     def get_authorized_user_id(self) -> Optional[int]:
         """Get authorized user ID"""

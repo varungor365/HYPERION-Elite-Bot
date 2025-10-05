@@ -20,7 +20,7 @@ echo "=================================================="
 
 # Bot credentials are hardcoded in the config - no input needed
 print_success "Bot credentials are pre-configured in the code!"
-TELEGRAM_BOT_TOKEN="7090420579:AAEmOwaBrySWXdqT7jyXybmjBOMKfOy3pM"
+TELEGRAM_BOT_TOKEN="7090420579:AAEmOwaErySWXdgT7jyXybYmjbOMKFOy3pM"
 AUTHORIZED_USER_ID="@megacheckk_bot"
 
 # Update system

@@ -200,7 +200,7 @@ echo -e "\n${GREEN}✅ HYPERION Elite Bot is now running with pre-configured cre
 
 echo -e "${BLUE}📱 Bot Information:${NC}"
 echo "   • Service Status: $(systemctl is-active hyperion-elite-bot)"
-echo "   • Bot Token: 7090420579:AAE... (pre-configured)"
+echo "   • Bot Token: 7090420579:AAEmOwa... (pre-configured)"
 echo "   • Authorized User: @megacheckk_bot + ID 796354588"
 echo "   • Installation Path: $BOT_DIR"
 
