@@ -32,9 +32,8 @@ PySocks>=1.7.1
 tenacity>=9.0.0
 colorama>=0.4.6
 
-# VPS Deployment
+# VPS Deployment (systemd-python removed - not needed for Alpine/containers)
 supervisor>=4.2.0
-systemd-python>=235
 
 # Optional GUI removal (headless)
 # customtkinter - REMOVED for headless mode
