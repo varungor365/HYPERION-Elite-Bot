@@ -49,10 +49,25 @@ print_status "Creating Python environment..."
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install packages
+# Install packages with tenacity fix
 print_status "Installing Python packages..."
 pip install --upgrade pip
-pip install -r requirements.txt
+
+# Handle tenacity conflict - install compatible version first
+print_status "Fixing tenacity version conflict..."
+pip install "tenacity>=8.0.0,<9.0.0"
+
+# Install mega.py with no-deps to avoid conflict
+print_status "Installing mega.py..."
+pip install mega.py==1.0.8 --no-deps
+pip install pycryptodome pathlib
+
+# Install other packages
+print_status "Installing remaining packages..."
+pip install python-telegram-bot==22.5 aiohttp aiofiles httpx
+pip install pandas numpy python-dotenv cryptography PySocks
+pip install requests "urllib3<2.0.0,>=1.26.0" colorama
+pip install tqdm rich backoff bcrypt loguru
 
 # Create environment file
 print_status "Creating configuration..."

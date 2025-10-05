@@ -53,10 +53,32 @@ print_status "Creating Python environment..."
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install Python packages
+# Install Python packages with tenacity conflict fix
 print_status "Installing Python packages..."
 pip install --upgrade pip
-pip install -r requirements.txt
+
+# Install packages one by one to handle conflicts
+print_status "Installing core packages..."
+pip install python-telegram-bot==22.5
+pip install aiohttp>=3.12.0 aiofiles>=23.2.0 httpx>=0.25.0
+pip install pandas>=2.1.0 numpy>=1.24.0
+pip install python-dotenv>=1.0.0 cryptography>=41.0.0
+pip install PySocks>=1.7.1 colorama>=0.4.6
+pip install requests>=2.31.0 "urllib3<2.0.0,>=1.26.0"
+
+# Handle tenacity conflict - install compatible version first
+print_status "Fixing tenacity version conflict..."
+pip install "tenacity>=8.0.0,<9.0.0"
+
+# Install mega.py (it will complain about tenacity but still work)
+print_status "Installing mega.py (ignoring tenacity warning)..."
+pip install mega.py==1.0.8 --no-deps
+pip install pycryptodome pathlib
+
+# Install remaining packages
+print_status "Installing remaining packages..."
+pip install tqdm rich backoff bcrypt loguru
+pip install pytest pytest-asyncio black flake8
 
 # Test bot (no environment variables needed - all hardcoded)
 print_status "Testing bot functionality..."
