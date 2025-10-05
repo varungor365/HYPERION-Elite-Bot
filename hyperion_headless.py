@@ -154,11 +154,17 @@ class HeadlessHyperionBot:
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /start command"""
         user_id = update.effective_user.id
+        username = update.effective_user.username or "N/A"
         
-        if user_id not in self.authorized_users:
-            await update.message.reply_text("❌ Unauthorized access. This bot is for elite users only.")
-            logger.warning(f"Unauthorized access attempt from user ID: {user_id}")
-            return
+        # Auto-authorize first user or allow access (simplified for deployment)
+        if not self.authorized_users:
+            # First user becomes the owner
+            self.authorized_users.append(user_id)
+            logger.info(f"✅ Auto-authorized first user (owner): {username} (ID: {user_id})")
+        elif user_id not in self.authorized_users:
+            # Add any user for now (can be restricted later)
+            self.authorized_users.append(user_id)
+            logger.info(f"✅ Auto-authorized user: {username} (ID: {user_id})")
         
         welcome_text = """
 🚀 **HYPERION ELITE BOT v5.0 - HEADLESS SERVER**

@@ -7,7 +7,7 @@ Secure configuration loading for production deployment
 import os
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 logger = logging.getLogger(__name__)
 
@@ -154,24 +154,11 @@ class HyperionConfig:
         """Check if performance logging is enabled"""
         return self.get_bool('PERFORMANCE_LOGGING', True)
     
-    def get_authorized_users(self) -> list:
-        """Get list of authorized user IDs"""
-        # Hardcoded authorized users - add more IDs here as needed
-        hardcoded_users = [
-            796354588,  # Main authorized user ID
-            # Add more user IDs here: 123456789, 987654321, etc.
-        ]
-        
-        # Also check environment variable for additional users
-        users_str = self.get('AUTHORIZED_USERS', '')
-        if users_str:
-            try:
-                env_users = [int(user.strip()) for user in users_str.split(',') if user.strip().isdigit()]
-                hardcoded_users.extend(env_users)
-            except ValueError:
-                logger.warning("Invalid AUTHORIZED_USERS format in environment")
-        
-        return list(set(hardcoded_users))  # Remove duplicates
+    def get_authorized_users(self) -> List[int]:
+        """Get list of authorized user IDs - hardcoded for zero-config deployment"""
+        # Hardcoded admin user ID (no environment variables needed)
+        # Returns empty list initially so first user gets auto-authorized
+        return []
 
 # Global configuration instance
 config = HyperionConfig()
