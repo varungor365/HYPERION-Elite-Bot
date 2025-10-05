@@ -40,10 +40,17 @@ apt install -y python3 python3-pip python3-venv git curl wget \
 BOT_DIR="/opt/HYPERION-Elite-Bot"
 print_status "Setting up bot in $BOT_DIR"
 
+# Fix git safe directory issue
+git config --global --add safe.directory $BOT_DIR
+
 if [[ -d "$BOT_DIR" ]]; then
-    cd $BOT_DIR && git pull origin main
+    print_status "Updating existing installation..."
+    cd $BOT_DIR 
+    git pull origin main
 else
-    cd /opt && git clone https://github.com/varungor365/HYPERION-Elite-Bot.git
+    print_status "Cloning fresh installation..."
+    cd /opt 
+    git clone https://github.com/varungor365/HYPERION-Elite-Bot.git
 fi
 
 cd $BOT_DIR
