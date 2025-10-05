@@ -1,33 +1,42 @@
-# HYPERION Elite Bot Dependencies
+# HYPERION Elite Bot - Production Dependencies
+# VPS/Server Ready Configuration
 
 # Core Bot Framework
-python-telegram-bot==20.7
-telegram==0.0.1
+python-telegram-bot==22.5
 
 # MEGA.nz Integration
 mega.py==1.0.8
-requests==2.31.0
-urllib3==2.0.7
+requests>=2.31.0
+urllib3>=2.0.0
 
-# Async & Threading
-asyncio-mqtt==0.13.0
-aiofiles==23.2.1
-concurrent-futures==3.1.1
+# Async & Networking
+aiohttp>=3.12.0
+aiofiles>=23.2.0
+httpx>=0.25.0
 
 # Data Processing & Analysis
-pandas==2.1.4
-numpy==1.24.4
-hashlib2==1.0.1
+pandas>=2.1.0
+numpy>=1.24.0
 
-# Proxy & Network
-aiohttp==3.9.1
-httpx==0.25.2
-socks==1.7.1
-requests-socks==1.0
+# Security & Configuration
+python-dotenv>=1.0.0
+cryptography>=41.0.0
 
-# Utilities
-python-dotenv==1.0.0
-colorama==0.4.6
+# Proxy & Network Tools
+requests-socks>=1.0
+socks>=1.7.0
+
+# System & Performance
+tenacity>=9.0.0
+colorama>=0.4.6
+
+# VPS Deployment
+supervisor>=4.2.0
+systemd-python>=235
+
+# Optional GUI removal (headless)
+# customtkinter - REMOVED for headless mode
+# tkinter - REMOVED for headless mode
 tqdm==4.66.1
 rich==13.7.0
 

@@ -1653,12 +1653,19 @@ Elite features, AI-powered, Private access
 Starting elite operations...
     """)
     
-    # Bot token
-    telegram_token = "7090420579:AAEmOwaErySWXdgT7jyXybYmjbOMKFOy3pM"
-    
     if not TELEGRAM_AVAILABLE:
         print("❌ Telegram libraries not installed!")
         print("Install with: pip install python-telegram-bot")
+        return
+    
+    # Load secure configuration
+    try:
+        from hyperion_config import config
+        telegram_token = config.get_telegram_token()
+        print("✅ Configuration loaded successfully")
+    except Exception as e:
+        print(f"❌ Configuration error: {e}")
+        print("Please check your .env file or environment variables")
         return
     
     # Create and run elite bot

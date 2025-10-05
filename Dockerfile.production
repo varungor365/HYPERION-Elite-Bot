@@ -1,0 +1,50 @@
+# Use Alpine Linux for minimal size
+FROM python:3.12-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    libffi-dev \
+    openssl-dev \
+    git \
+    curl
+
+# Create non-root user for security
+RUN adduser -D -s /bin/sh hyperion
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Set ownership to hyperion user
+RUN chown -R hyperion:hyperion /app
+
+# Create log directory
+RUN mkdir -p /var/log/hyperion && chown hyperion:hyperion /var/log/hyperion
+
+# Switch to non-root user
+USER hyperion
+
+# Expose port (if needed for web interface)
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import requests; requests.get('https://api.telegram.org', timeout=5)" || exit 1
+
+# Environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Default command (headless mode)
+CMD ["python", "hyperion_headless.py"]
