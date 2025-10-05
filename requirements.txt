@@ -42,16 +42,13 @@ tqdm==4.66.1
 rich==13.7.0
 
 # Error Handling & Retry
-tenacity==8.2.3
 backoff==2.2.1
 
-# Security
-cryptography==41.0.8
+# Security (using cryptography>=41.0.0 from above)
 bcrypt==4.1.2
 
-# Logging & Monitoring
+# Logging & Monitoring (using psutil>=6.0.0 from above)
 loguru==0.7.2
-psutil==5.9.6
 
 # Development & Testing (Optional)
 pytest==7.4.3
