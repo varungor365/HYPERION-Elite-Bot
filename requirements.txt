@@ -18,8 +18,8 @@ httpx>=0.25.0
 pandas>=2.1.0
 numpy>=1.24.0
 
-# System Monitoring
-psutil>=6.0.0
+# System Monitoring (Optional - bot has /proc fallback for Alpine Linux)
+# psutil>=6.0.0  # Requires linux-headers on Alpine, commented out for compatibility
 
 # Security & Configuration
 python-dotenv>=1.0.0
